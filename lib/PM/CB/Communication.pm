@@ -4,13 +4,14 @@ use warnings;
 use strict;
 
 use constant {
-    FREQ          => 7,
+    FREQ             => 7,
+    REPEAT_THRESHOLD => 3,
     # Node ids:
-    LOGIN         => 109,
-    CB            => 207304,
-    SEND          => 227820,
-    PRIVATE       => 15848,
-    MONKLIST      => 15851,
+    LOGIN            => 109,
+    CB               => 207304,
+    SEND             => 227820,
+    PRIVATE          => 15848,
+    MONKLIST         => 15851,
 };
 
 
@@ -166,7 +167,7 @@ sub login {
 
 
 sub send_message {
-    my ($self, $message) = @_;
+    my ($self, $message, $repeated) = @_;
     return unless length $message;
 
     ( my $msg = $message )
@@ -177,9 +178,21 @@ sub send_message {
                        node    => SEND,
                        message => $msg }
     );
+    if (! $response->is_success
+        || $response->content =~ m{<title>500\ Internal\ Server\ Error<
+                                   |Server\ Error\ \(Error\ ID\ \w+\)</span>}x
+       ) {
+        warn "repeat: $repeated";
+        $self->send_message($message, $repeated + 1)
+            unless $repeated > REPEAT_THRESHOLD;
+        return
+    }
+
     my $content = $response->content;
-    $self->{to_gui}->enqueue([ private => '<pm-cb-g>', undef, $content ])
-        unless $content =~ /^Chatter accepted/;
+    warn(scalar localtime, " | ACC $content"),
+    return if $content =~ /^Chatter accepted/;
+
+    $self->{to_gui}->enqueue([ private => '<pm-cb-g>', undef, $content ]);
 }
 
 
