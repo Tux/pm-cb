@@ -30,7 +30,7 @@ BEGIN {
         warn_color    => 'red',
         font_name     => 'Helvetica',
         char_size     => 12,
-        stack_size    => 15,
+        stack_size    => 18,
         mce           => undef,
         no_time       => 0,
         pm_url        => 'www.perlmonks.org',
@@ -149,13 +149,15 @@ my $control_t = $worker_class->create(sub {
     $control->start_comm;
 });
 
-my $gui = 'PM::CB::GUI'->new({
+my $gui = $worker_class->create (sub {'PM::CB::GUI'->new({
     %conf,
     from_comm  => $to_gui,
     to_comm    => $to_comm,
     to_control => $to_control,
-    control_t  => $control_t});
-$gui->gui;
+    control_t  => $control_t,
+    })->gui;
+$gui->join;
+$control_t->join;
 
 # MCE::Channel can only enqueue, it has no insert method.
 sub MCE::Channel::insert {
