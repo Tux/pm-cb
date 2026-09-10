@@ -857,7 +857,7 @@ sub blink_icon {
 
 sub quit {
     my ($self) = @_;
-    print STDERR "Quitting...\n";
+    tswarn('Quitting...');
     $self->{to_control}->insert(0, ['quit']);
     if ('MSWin32' ne $^O && $self->{mce}{child}) {
         $self->{control_t}->kill('QUIT');
