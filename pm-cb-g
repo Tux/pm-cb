@@ -155,7 +155,7 @@ my $gui = $worker_class->create (sub {'PM::CB::GUI'->new({
     to_comm    => $to_comm,
     to_control => $to_control,
     control_t  => $control_t,
-    })->gui;
+    })->gui });
 $gui->join;
 $control_t->join;
 
